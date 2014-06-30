@@ -1,47 +1,37 @@
 #!/bin/bash
-FIREFOX_BIN="firefox/firefox"
-HUB_IP=$1
-
-stop(){
-	if [ -z "$(ps -ef | grep selenium-server-standalone | grep -v grep)" ]
-	then
-	    echo "Application is already stopped"
-	else
-	    echo "Stopping server"
- 	   kill `ps -ef | grep selenium-server-standalone | grep -v grep | awk '{ print $2 }'`
-	fi
-}
+# Downloads selenium server standalone jar and starts selenium grid node with parameters specified in nodeConfig.json
+# can be used with params for the node, like: "sh startNode.sh -Dwebdriver.ie.driver='path-x' ..." 
 
 getSeleniumServer(){
-    SHORT_VERSION=$1
-    if [ ! -n "$1" ]; then
-        echo "exiting, no version specified"
-        exit -1;
-    fi
-    echo "selenium short version=${SHORT_VERSION}"
-    echo $2
-    if [ -z "$2" ]; then
-        LONG_VERSION="${SHORT_VERSION}.0"
-    else
- 	LONG_VERSION=${SHORT_VERSION}.$2
-    fi
-    echo "selenium long version=${LONG_VERSION}"
+    	LONG_VERSION=$1
+    	if [ ! -n "$1" ]; then
+        	echo "exiting, no version specified"
+        	exit -1;
+    	fi
 
-    wget -c http://selenium-release.storage.googleapis.com/${SHORT_VERSION}/selenium-server-standalone-${LONG_VERSION}.jar
+    	echo "selenium long version=${LONG_VERSION}"
+	# this could only work when the last version specifier is only 1 character long (e.g. 2.42.2, but not e.g. 2.42.10)
+	SHORT_VERSION=${LONG_VERSION:0:-2}
+    	echo "selenium short version=${SHORT_VERSION}" 
+
+   	wget -c http://selenium-release.storage.googleapis.com/${SHORT_VERSION}/selenium-server-standalone-${LONG_VERSION}.jar
 }
 
 runNode(){
-    echo "Starting node..."
-    IP=$1
-    java -jar selenium-server-standalone-${LONG_VERSION}.jar -port 44444 -role node -hub http://${HUB_IP}:4444/grid/register -browser browserName=firefox,version=29,firefox_binary=/qa/tools/opt/firefox-29/firefox,maxInstances=2,platform=WINDOWS &
+    	echo "Starting node..."
+	PARAMS=""
+	echo "starting node with additional params: " $@
+
+	while [ "$#" != "0" ]; do
+		PARAMS+=$1
+		PARAMS+=" "
+		shift
+	done
+	echo $PARAMS
+	nohup java -jar selenium-server-standalone-${LONG_VERSION}.jar -role node -nodeConfig nodeConfig.json "$PARAMS" > node.out &
+    	tail -F node.out
 }
 
-stopAndQuit(){
-	stop
-	exit 0;
-}
-
-#trap stopAndQuit SIGINT
-
-getSeleniumServer 2.42 2
-runNode ${HUB_IP}
+trap "sh stop.sh node" INT
+getSeleniumServer 2.42.2
+runNode "$@"

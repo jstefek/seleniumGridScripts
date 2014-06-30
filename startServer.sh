@@ -1,16 +1,5 @@
 #!/bin/bash
-FIREFOX_BIN="firefox/firefox"
-HUB_IP=$1
-
-stop(){
-	if [ -z "$(ps -ef | grep selenium-server-standalone | grep -v grep)" ]
-	then
-	    echo "Application is already stopped"
-	else
-	    echo "Stopping server"
- 	   kill `ps -ef | grep selenium-server-standalone | grep -v grep | awk '{ print $2 }'`
-	fi
-}
+# Downloads selenium server standalone jar and starts selenium grid hub with default parameters
 
 getSeleniumServer(){
     SHORT_VERSION=$1
@@ -32,15 +21,10 @@ getSeleniumServer(){
 
 runHub(){
     echo "Starting hub..."
-    java -jar selenium-server-standalone-${LONG_VERSION}.jar -role hub
+    nohup java -jar selenium-server-standalone-${LONG_VERSION}.jar -role hub > hub.out &
+    tail -F hub.out
 }
 
-stopAndQuit(){
-	stop
-	exit 0;
-}
-
-#trap stopAndQuit SIGINT
-
+trap "sh stop.sh hub" INT
 getSeleniumServer 2.42 2
 runHub
