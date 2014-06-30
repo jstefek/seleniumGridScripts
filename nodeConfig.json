@@ -1,0 +1,29 @@
+{
+  "capabilities":
+      [
+        {
+          "browserName": "internet explorer",
+          "maxInstances": 2,
+          "seleniumProtocol": "WebDriver",
+ 	  "version": "11",
+        },
+        {
+          "browserName": "firefox",
+          "maxInstances": 2,
+          "seleniumProtocol": "WebDriver",
+ 	  "version": "29",
+        }
+      ],
+  "configuration":
+  {
+    "proxy": "org.openqa.grid.selenium.proxy.DefaultRemoteProxy",
+    "maxSession": 2,
+
+    "register": true,
+    "registerCycle": 5000,
+
+    "hubPort": 4444,
+    "hubHost": "localhost"
+  }
+}
+
